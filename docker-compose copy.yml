@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # PHP-FPM服务
+  php:
+    image:  sanqi37/typecho-php:v1.0
+    container_name: typecho_php
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+      - sqlite_data:/var/www/html/usr/sqlite
+    networks:
+      - typecho_network
+
+  # Nginx服务
+  nginx:
+    image: nginx:alpine
+    container_name: typecho_nginx
+    restart: unless-stopped
+    ports:
+      - "37090:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+      - sqlite_data:/var/www/html/usr/sqlite
+    depends_on:
+      - php
+    networks:
+      - typecho_network
+
+volumes:
+  sqlite_data:
+
+networks:
+  typecho_network:
+    driver: bridge 
