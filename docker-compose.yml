@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PHP-FPM服务
   php:
-    image:  sanqi37/typecho-php:v1.0
+    image:  sanqi37/typecho-php:v1.1
     container_name: typecho_php
     restart: unless-stopped
     volumes:
