@@ -34,3 +34,4 @@ usr/themes/*
 !usr/themes/classic-22
 node_modules/
 tools/tmp/
+migrate_md_to_typecho_custom.php
