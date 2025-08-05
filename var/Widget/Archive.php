@@ -563,12 +563,14 @@ class Archive extends Contents
 
         /** 处理搜索结果跳转 */
         if ($this->request->is('s')) {
-            $filterKeywords = $this->request->filter('search')->get('s');
+            $filterKeywords = $this->request->get('s');
 
             /** 跳转到搜索页 */
             if (null != $filterKeywords) {
+                // 直接使用原始关键字，不进行 slugName 处理
+                $encodedKeywords = urlencode($filterKeywords);
                 $this->response->redirect(
-                    Router::url('search', ['keywords' => urlencode($filterKeywords)], $this->options->index)
+                    Router::url('search', ['keywords' => $encodedKeywords], $this->options->index)
                 );
             }
         }
@@ -2067,25 +2069,59 @@ EOF;
     {
         /** 增加自定义搜索引擎接口 */
         //~ fix issue 40
-        $keywords = $this->request->filter('url', 'search')->get('keywords');
+        $keywords = $this->request->get('keywords');
+        // 修复URL解码问题，确保逗号正确处理
+        $keywords = urldecode($keywords);
         self::pluginHandle()->trigger($hasPushed)->call('search', $keywords, $this);
 
         if (!$hasPushed) {
-            $searchQuery = '%' . str_replace(' ', '%', $keywords) . '%';
+            // 统一的多关键字搜索处理（兼容单关键字）
+            $keywords = trim($keywords);
+            if (!empty($keywords)) {
+                // 将中英文逗号统一为英文逗号，然后分割
+                $keywords = str_replace(['，', '、'], ',', $keywords);
+                // 先按逗号分割，再按空格分割，支持多种分隔符
+                $keywordArray = [];
+                $commaParts = explode(',', $keywords);
+                foreach ($commaParts as $part) {
+                    $spaceParts = explode(' ', trim($part));
+                    foreach ($spaceParts as $keyword) {
+                        $keyword = trim($keyword);
+                        if (!empty($keyword)) {
+                            $keywordArray[] = $keyword;
+                        }
+                    }
+                }
+                $keywordArray = array_unique($keywordArray); // 移除重复关键字
+                
+                if (!empty($keywordArray)) {
+                    // 构建多关键字搜索条件
+                    $searchConditions = [];
+                    $searchParams = [];
+                    
+                    foreach ($keywordArray as $keyword) {
+                        if (!empty($keyword)) {
+                            $searchConditions[] = "(table.contents.title LIKE ? OR table.contents.text LIKE ?)";
+                            $searchParams[] = '%' . $keyword . '%';
+                            $searchParams[] = '%' . $keyword . '%';
+                        }
+                    }
+                    
+                    if (!empty($searchConditions)) {
+                        // 搜索无法进入隐私项保护归档
+                        if ($this->user->hasLogin()) {
+                            //~ fix issue 941
+                            $select->where("table.contents.password IS NULL
+                             OR table.contents.password = '' OR table.contents.authorId = ?", $this->user->uid);
+                        } else {
+                            $select->where("table.contents.password IS NULL OR table.contents.password = ''");
+                        }
 
-            /** 搜索无法进入隐私项保护归档 */
-            if ($this->user->hasLogin()) {
-                //~ fix issue 941
-                $select->where("table.contents.password IS NULL
-                 OR table.contents.password = '' OR table.contents.authorId = ?", $this->user->uid);
-            } else {
-                $select->where("table.contents.password IS NULL OR table.contents.password = ''");
+                        $select->where('(' . implode(' AND ', $searchConditions) . ')', ...$searchParams)
+                            ->where('table.contents.type = ?', 'post');
+                    }
+                }
             }
-
-            $op = $this->db->getAdapter()->getDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
-
-            $select->where("table.contents.title {$op} ? OR table.contents.text {$op} ?", $searchQuery, $searchQuery)
-                ->where('table.contents.type = ?', 'post');
         }
 
         /** 设置关键词 */
