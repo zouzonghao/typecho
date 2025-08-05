@@ -28,7 +28,7 @@ docker compose ps
 
 echo "部署完成！"
 echo "访问地址: http://localhost"
-echo "SQLite数据库文件位置: usr/sqlite/"
+echo "SQLite数据库文件位置: usr/uuid.db"
 echo ""
 echo "常用命令:"
 echo "  查看日志: docker compose logs"
