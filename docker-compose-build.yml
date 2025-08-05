@@ -3,7 +3,9 @@ version: '3.8'
 services:
   # PHP-FPM服务
   php:
-    image:  sanqi37/typecho-php:v1.0
+    build:
+      context: .
+      dockerfile: Dockerfile.php
     container_name: typecho_php
     restart: unless-stopped
     volumes:
@@ -29,6 +31,7 @@ services:
       - php
     networks:
       - typecho_network
+
 
 networks:
   typecho_network:
