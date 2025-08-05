@@ -504,11 +504,28 @@ function install_raise_error($error, $config = null)
 
         exit(1);
     } else {
+        // 清除任何输出缓冲，确保 JSON 输出干净
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // 确保没有其他输出
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // 设置错误报告级别，避免输出警告
+        $old_error_reporting = error_reporting();
+        error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+        
         install_throw_json([
             'success' => 0,
             'message' => is_string($error) ? nl2br($error) : $error,
             'config' => $config
         ]);
+        
+        // 恢复错误报告级别
+        error_reporting($old_error_reporting);
     }
 }
 
@@ -539,11 +556,28 @@ function install_success($step, ?array $config = null)
 
         exit(0);
     } else {
+        // 清除任何输出缓冲，确保 JSON 输出干净
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // 确保没有其他输出
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // 设置错误报告级别，避免输出警告
+        $old_error_reporting = error_reporting();
+        error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+        
         install_throw_json([
             'success' => 1,
             'message' => $step,
             'config'  => $config
         ]);
+        
+        // 恢复错误报告级别
+        error_reporting($old_error_reporting);
     }
 }
 
@@ -552,11 +586,45 @@ function install_success($step, ?array $config = null)
  */
 function install_throw_json($data)
 {
+    // 清除任何输出缓冲，确保 JSON 输出干净
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // 确保没有其他输出
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // 设置错误报告级别，避免输出警告
+    $old_error_reporting = error_reporting();
+    error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+    
     \Typecho\Response::getInstance()->setContentType('application/json')
         ->addResponder(function () use ($data) {
+            // 再次清除输出缓冲，确保 JSON 输出干净
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // 确保没有其他输出
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // 设置错误报告级别，避免输出警告
+            $old_error_reporting = error_reporting();
+            error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+            
             echo json_encode($data);
+            
+            // 恢复错误报告级别
+            error_reporting($old_error_reporting);
         })
         ->respond();
+    
+    // 恢复错误报告级别
+    error_reporting($old_error_reporting);
 }
 
 /**
@@ -564,9 +632,44 @@ function install_throw_json($data)
  */
 function install_redirect(string $url)
 {
+    // 清除任何输出缓冲，确保重定向干净
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // 确保没有其他输出
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // 设置错误报告级别，避免输出警告
+    $old_error_reporting = error_reporting();
+    error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+    
     \Typecho\Response::getInstance()->setStatus(302)
         ->setHeader('Location', $url)
+        ->addResponder(function () {
+            // 再次清除输出缓冲，确保重定向干净
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // 确保没有其他输出
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // 设置错误报告级别，避免输出警告
+            $old_error_reporting = error_reporting();
+            error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+            
+            // 恢复错误报告级别
+            error_reporting($old_error_reporting);
+        })
         ->respond();
+    
+    // 恢复错误报告级别
+    error_reporting($old_error_reporting);
 }
 
 /**
@@ -643,7 +746,10 @@ function install_js_support()
                     $('button', form).removeAttr('disabled');
 
                     if (data.success) {
-                        if (data.message) {
+                        if (data.redirect) {
+                            // 处理重定向响应
+                            location.href = data.redirect;
+                        } else if (data.message) {
                             location.href = '?step=' + data.message;
                         } else {
                             let success = $('#success').removeClass('hidden');
@@ -1452,14 +1558,66 @@ function install_dispatch()
                 if (!install_check('db_structure')) {
                     $action = 2;
                 } else {
-                    install_redirect('install.php?step=3');
+                    // 对于AJAX请求，返回JSON响应而不是重定向
+                    if ($request->isAjax()) {
+                        // 清除任何输出缓冲，确保 JSON 输出干净
+                        if (ob_get_level()) {
+                            ob_end_clean();
+                        }
+                        
+                        // 确保没有其他输出
+                        while (ob_get_level()) {
+                            ob_end_clean();
+                        }
+                        
+                        // 设置错误报告级别，避免输出警告
+                        $old_error_reporting = error_reporting();
+                        error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+                        
+                        install_throw_json([
+                            'success' => 1,
+                            'message' => 3,
+                            'redirect' => 'install.php?step=3'
+                        ]);
+                        
+                        // 恢复错误报告级别
+                        error_reporting($old_error_reporting);
+                    } else {
+                        install_redirect('install.php?step=3');
+                    }
                 }
                 break;
             case $step == 3:
                 if (install_check('db_structure')) {
                     $action = 3;
                 } else {
-                    install_redirect('install.php?step=2');
+                    // 对于AJAX请求，返回JSON响应而不是重定向
+                    if ($request->isAjax()) {
+                        // 清除任何输出缓冲，确保 JSON 输出干净
+                        if (ob_get_level()) {
+                            ob_end_clean();
+                        }
+                        
+                        // 确保没有其他输出
+                        while (ob_get_level()) {
+                            ob_end_clean();
+                        }
+                        
+                        // 设置错误报告级别，避免输出警告
+                        $old_error_reporting = error_reporting();
+                        error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING);
+                        
+                        install_throw_json([
+                            'success' => 1,
+                            'message' => 2,
+                            'redirect' => 'install.php?step=2'
+                        ]);
+                        
+                        // 恢复错误报告级别
+                        error_reporting($old_error_reporting);
+                    } else {
+                        install_redirect('install.php?step=2');
+                    }
                 }
                 break;
             default:

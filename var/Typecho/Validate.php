@@ -272,7 +272,7 @@ class Validate
      *
      * @return    array
      */
-    public function run(array $data, array $rules = null): array
+    public function run(array $data, ?array $rules = null): array
     {
         $result = [];
         $this->data = $data;
