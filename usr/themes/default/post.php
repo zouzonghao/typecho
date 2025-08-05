@@ -7,8 +7,12 @@
         <div class="post-content" itemprop="articleBody">
             <?php $this->content(); ?>
         </div>
-        <p itemprop="keywords" class="tags"><?php _e('标签'); ?>: <?php $this->tags(', ', true, 'none'); ?></p>
     </article>
+
+    <!-- 返回顶部链接 -->
+    <div class="back-to-top">
+        <a href="#top">↑ 返回顶部</a>
+    </div>
 
     <?php $this->need('comments.php'); ?>
 

@@ -46,6 +46,9 @@ function postMeta(
                 <time datetime="<?php $archive->date('c'); ?>" itemprop="datePublished"><?php $archive->date(); ?></time>
             </li>
             <li><?php _e('分类'); ?>: <?php $archive->category(','); ?></li>
+            <?php if ($metaType == 'post'): ?>
+                <li><?php _e('标签'); ?>: <?php $archive->tags(', ', true, 'none'); ?></li>
+            <?php endif; ?>
             <?php if ($metaType == 'archive'): ?>
                 <li itemprop="interactionCount">
                     <a itemprop="discussionUrl"

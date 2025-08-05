@@ -592,5 +592,24 @@ img.alignright {
 .invisible {
   visibility: hidden; }
 
+/* 返回顶部链接样式 */
+.back-to-top {
+  text-align: center;
+  margin: 10px 0;
+  padding: 10px 0;
+}
+
+.back-to-top a {
+  color: #333333;
+  text-decoration: none;
+  font-size: 1em;
+  border-bottom: 1px solid #EEE;
+}
+
+.back-to-top a:hover {
+  color: #333333;
+  border-bottom-color: #333333;
+}
+
 
 

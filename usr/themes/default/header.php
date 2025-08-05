@@ -23,7 +23,7 @@
     <!-- 通过自有函数输出HTML头部信息 -->
     <?php $this->header(); ?>
 </head>
-<body>
+<body id="top">
 
 <header id="header" class="clearfix">
     <div class="container">
